@@ -1,29 +1,20 @@
-require('dotenv').config(); // Load environment variables for database connection
 
-const express = require('express'); // Load Express
-const mongoose = require('mongoose'); // Load Mongoose
+const express = require('express');
+const mongoose = require('mongoose');
+
+require('dotenv').config();
+
+const Car = require('./models/car');
 
 const app = express();
 const PORT = 3000;
 
-// Define car schema
-const carSchema = new mongoose.Schema({
-  name: String,
-  model: String,
-  year: Number,
-});
-
-const Car = mongoose.model('Car', carSchema);
-
 // Middleware
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json()); // إضافة هذه السطر لمعالجة JSON
+app.use(express.json());
 app.use(express.static('public'));
 
-// Config EJS
-app.set('view engine', 'ejs');
-
-// Connect to the database
+// Connect to the database (MongoDB)
 async function connectDB() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
@@ -38,38 +29,65 @@ app.get('/', (req, res) => {
   res.render('index');
 });
 
-// Add new car
-app.get('/add-car', (req, res) => {
-  res.render('add-car');
+
+
+// Define car schema
+const carSchema = new mongoose.Schema({
+  name: String,
+  model: String,
+  year: Number,
 });
 
-// Add new car to database
-app.post('/add-car', (req, res) => {
-  const newCar = new Car({
-    name: req.body.name,
-    model: req.body.model,
-    year: req.body.year,
-  });
-  
-  newCar.save()
-    .then(() => res.redirect('/car-list'))
-    .catch(err => {
-      console.log(err);
-      res.status(500).send('Error saving car');
-    });
+
+
+
+// Config EJS
+app.set('view engine', 'ejs');
+
+
+// Display all cars
+app.get('/cars', async (req, res) => {
+    const cars = await Car.find();
+    res.render('index', { cars });
 });
 
-// Show car list
-app.get('/car-list', (req, res) => {
-  Car.find({}, (err, cars) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send('Error retrieving cars');
-    } else {
-      res.render('car-list', { cars: cars });
-    }
-  });
+
+// Show new car form
+app.get('/cars/new', (req, res) => {
+    res.render('new');
 });
+
+// Create a new car
+app.post('/cars', async (req, res) => {
+    const newCar = new Car(req.body);
+    await newCar.save();
+    res.redirect('/cars');
+});
+
+// Show specific car
+app.get('/cars/:id', async (req, res) => {
+    const car = await Car.findById(req.params.id);
+    res.render('show', { car });
+});
+
+// Show edit form
+app.get('/cars/:id/edit', async (req, res) => {
+    const car = await Car.findById(req.params.id);
+    res.render('edit', { car });
+});
+
+// Update a car
+app.put('/cars/:id', async (req, res) => {
+    await Car.findByIdAndUpdate(req.params.id, req.body);
+    res.redirect(`/cars/${req.params.id}`);
+});
+
+// Delete a car
+app.delete('/cars/:id', async (req, res) => {
+    await Car.findByIdAndDelete(req.params.id);
+    res.redirect('/cars');
+});
+
 
 // Start the server
 connectDB().then(() => {
