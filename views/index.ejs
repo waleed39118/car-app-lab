@@ -1,14 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cars App</title>
+ <title>Car List</title>
 </head>
 <body>
-    <h1>Welcome to Cars App!</h1>
-    <a href="/add-car">ADD CAR</a>
-    <a href="/car-list">CAR LIST</a>
-
+   <h1>Cars</h1>
+  <a href="/cars/new">Add New Car</a>
+  <ul>
+    <% cars.forEach(car => { %>
+      <li>
+        <a href="/cars/<%= car._id %>"><%= car.name %> - <%= car.model %> - <%= car.year %></a>
+        <form action="/cars/<%= car._id %>?_method=DELETE" method="POST" style="display:inline;">
+          <button type="submit">Delete</button>
+        </form>
+      </li>
+    <% }) %>
+  </ul>
 </body>
 </html>
